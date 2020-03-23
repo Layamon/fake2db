@@ -4,6 +4,7 @@ import string
 import random
 import uuid
 
+id_val = 0
 
 def fake2db_logger():
     '''creates a logger obj'''
@@ -35,4 +36,6 @@ def rnd_id_generator(self):
     UUID('dd1098bd-70ac-40ea-80ef-d963f09f95a7')
     than gets rid of dashes
     '''
-    return str(uuid.uuid4()).replace('-', '')
+    id_val +=1
+    # return str(uuid.uuid4()).replace('-', '')
+    return str(id_val)

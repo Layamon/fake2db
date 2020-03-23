@@ -92,7 +92,7 @@ class Fake2dbMySqlHandler(BaseHandler):
             "  `email` varchar(200) NOT NULL,"
             "  `password` varchar(200) NOT NULL,"
             "  PRIMARY KEY (`id`)"
-            ") ENGINE=InnoDB")
+            ") ")
 
         tables['detailed_registration'] = (
             "CREATE TABLE `detailed_registration` ("
@@ -104,7 +104,7 @@ class Fake2dbMySqlHandler(BaseHandler):
             "  `address` varchar(200) NOT NULL,"
             "  `phone` varchar(200) NOT NULL,"
             "  PRIMARY KEY (`id`)"
-            ") ENGINE=InnoDB")
+            ") ")
 
         tables['user_agent'] = (
             "CREATE TABLE `user_agent` ("
@@ -113,7 +113,7 @@ class Fake2dbMySqlHandler(BaseHandler):
             "  `countrycode` varchar(200) NOT NULL,"
             "  `useragent` varchar(200) NOT NULL,"
             "  PRIMARY KEY (`id`)"
-            ") ENGINE=InnoDB")
+            ") ")
 
         tables['company'] = (
             "CREATE TABLE `company` ("
@@ -124,11 +124,11 @@ class Fake2dbMySqlHandler(BaseHandler):
             "  `domain` varchar(200) NOT NULL,"
             "  `city` varchar(200) NOT NULL,"
             "  PRIMARY KEY (`id`)"
-            ") ENGINE=InnoDB")
+            ") ")
 
         tables['customer'] = (
             "CREATE TABLE `customer` ("
-            "  `id` varchar(200) NOT NULL,"
+            "  `id` BIGINT NOT NULL AUTO_INCREMENT,"
             "  `name` varchar(200) NOT NULL,"
             "  `lastname` varchar(200) NOT NULL,"
             "  `address` varchar(200) NOT NULL,"
@@ -140,7 +140,7 @@ class Fake2dbMySqlHandler(BaseHandler):
             "  `phone_number` varchar(200) NOT NULL,"
             "  `locale` varchar(200) NOT NULL,"
             "  PRIMARY KEY (`id`)"
-            ") ENGINE=InnoDB")
+            ") ")
 
         return tables
 
@@ -149,8 +149,8 @@ class Fake2dbMySqlHandler(BaseHandler):
         '''
 
         custom_d = faker_options_container()
-        sqlst = "CREATE TABLE `custom` (`id` varchar(200) NOT NULL,"
-        custom_payload = "INSERT INTO custom (id,"
+        sqlst = "CREATE TABLE `custom` (`id` BIGINT NOT NULL AUTO_INCREMENT,"
+        custom_payload = "INSERT INTO custom ("
         
         # form the sql query that will set the db up
         for c in custom:
@@ -163,9 +163,9 @@ class Fake2dbMySqlHandler(BaseHandler):
                 sys.exit(1)
                 
         # the indice thing is for trimming the last extra comma
-        sqlst += " PRIMARY KEY (`id`)) ENGINE=InnoDB"
+        sqlst += " PRIMARY KEY (`id`)); "
         custom_payload = custom_payload[:-1]
-        custom_payload += ") VALUES (%s, "
+        custom_payload += ") VALUES ("
         
         for i in range(0, len(custom)):
             custom_payload += "%s, "
@@ -177,18 +177,20 @@ class Fake2dbMySqlHandler(BaseHandler):
         except mysql.connector.Error as err:
             logger.error(err.msg, extra=extra_information)
 
-        multi_lines = []
-        try:
-            for i in range(0, number_of_rows):
-                multi_lines.append([rnd_id_generator(self)])
-                for c in custom:
-                    multi_lines[i].append(getattr(self.faker, c)())
-            
-            cursor.executemany(custom_payload, multi_lines)
-            conn.commit()
-            logger.warning('custom Commits are successful after write job!', extra=extra_information)
-        except Exception as e:
-            logger.error(e, extra=extra_information)
+        while True:
+            multi_lines = []
+            try:
+                for i in range(0, 10):
+                    multi_lines.append([])
+                    for c in custom:
+                        multi_lines[i].append(getattr(self.faker, c)())
+                cursor.executemany(custom_payload, multi_lines)
+                conn.commit()
+                logger.warning('custom Commits are successful after write job!', extra=extra_information)
+            except Exception as e:
+                logger.error(e, extra=extra_information)
+
+            print("10 lines")
     
     def data_filler_simple_registration(self, number_of_rows, cursor, conn):
         '''creates and fills the table with simple regis. information
@@ -284,15 +286,15 @@ class Fake2dbMySqlHandler(BaseHandler):
             for i in range(0, number_of_rows):
                 
                 customer_data.append((
-                    rnd_id_generator(self), self.faker.first_name(), self.faker.last_name(), self.faker.address(),
+                    self.faker.first_name(), self.faker.last_name(), self.faker.address(),
                     self.faker.country(), self.faker.city(), self.faker.date(pattern="%d-%m-%Y"),
                     self.faker.date(pattern="%d-%m-%Y"), self.faker.safe_email(), self.faker.phone_number(),
                     self.faker.locale()))
                 
             customer_payload = ("INSERT INTO customer "
-                                "(id, name, lastname, address, country, city, registry_date, birthdate, email, "
+                                "(name, lastname, address, country, city, registry_date, birthdate, email, "
                                 "phone_number, locale)"
-                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
             cursor.executemany(customer_payload, customer_data)
             conn.commit()
             logger.warning('detailed_registration Commits are successful after write job!', extra=extra_information)
